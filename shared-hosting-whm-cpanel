@@ -1,13 +1,15 @@
 <?php
-$whmip = $addons_val23; // whm_ip   
-$whmusername = $addons_val24; // whm_username
-$whmpassword = $addons_val25; // whm_password
+$whmip = $addons_val23; // whm_ip as set for this product's addons  
+$whmusername = $addons_val24; // whm_username as set for this product's addons 
+$whmpassword = $addons_val25; // whm_password as set for this product's addons 
 
 
-if ($category_name == 'Shared Hosting'){
-if ($process_type == 'NEW'){
+if ($category_name == 'Shared Hosting'){  // insert your category, for shared hosting, its recommend you use Shared Hosting cos this has been hard coded in the UI to show the flow for shared hosting
+if ($process_type == 'NEW'){ // if the process type is new as sent by FHBRS
 
- $query = "https://$whmip:2087/json-api/getpkginfo?api.version=1&pkg=$addons_val1";
+
+// first we would check if this package exist in WHM
+$query = "https://$whmip:2087/json-api/getpkginfo?api.version=1&pkg=$addons_val1"; 
 $curl = curl_init();                                // Create Curl Object
 curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
 curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);       // Allow certs that do not match the hostname
@@ -26,7 +28,7 @@ curl_close($curl);
 $result_true = $rep['metadata']['result'];  
   
   
-   if ($result_true != 1){ // if the package has not been created before
+   if ($result_true != 1){ // if the package has not been created before then create it
     $query = "https://$whmip:2087/json-api/addpkg?api.version=1&$addons_col1=$addons_val1&$addons_col2=$addons_val2&$addons_col3=$addons_val3&$addons_col4=$addons_val4&$addons_col5=$addons_val5&$addons_col6=$addons_val6&$addons_col7=$addons_val7&$addons_col8=$addons_val8&$addons_col9=$addons_val9&$addons_col10=$addons_val10&$addons_col11=$addons_val11&$addons_col12=$addons_val12&$addons_col13=$addons_val13&$addons_col14=$addons_val14&$addons_col15=$addons_val15&$addons_col16=$addons_val16";
     
     $curl = curl_init();                                // Create Curl Object
@@ -50,9 +52,11 @@ $result_true = $rep['metadata']['result'];  
 }
 
 
- if ($result_true == 1 OR  $result_true2 == 1){ // if package exist or new package has been created
-$orderid= strtoupper($token); // uppercase for order id
-$domain = $add_hosting; // domain chosen for the hosting
+if ($result_true == 1 OR  $result_true2 == 1){ // if package exist or new package has been created
+ 
+$domain= $ord_add_hosting; // the domain for this order 
+$orderid= strtoupper($ord_token); // uppercase for order id
+$domain = $ord_add_hosting; // domain chosen for the hosting
 $shared_userss= strtok($domain, '.'); // use the domain as the account username but remove the .
 $shared_user= preg_replace('/[0-9]+/', '', $shared_userss); // remove possible numbers
 $shared_u= substr($shared_user, 0, 10); // the trimmed value should not be more than 10
@@ -263,7 +267,7 @@ if ($process_type == 'SUSPEND'){
  
        // TO UN-SUSPEND AN ACCOUNT
 if ($process_type == 'UN-SUSPEND'){
-     $query = "https://$whmip:2087/json-api/unsuspendacct?api.version=1&user==$saved_username"; 
+     $query = "https://$whmip:2087/json-api/unsuspendacct?api.version=1&user=$saved_username"; 
         
     $curl = curl_init();                                // Create Curl Object
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
