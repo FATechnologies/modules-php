@@ -1,15 +1,15 @@
 <?php
-$whmip = $addons_val23; // whm_ip as set for this product's addons  
-$whmusername = $addons_val24; // whm_username as set for this product's addons 
-$whmpassword = $addons_val25; // whm_password as set for this product's addons 
+$whmip = $addons_val23; // whm_ip   
+$whmusername = $addons_val24; // whm_username
+$whmpassword = $addons_val25; // whm_password
 
 
-if ($category_name == 'Shared Hosting'){  // insert your category, for shared hosting, its recommend you use Shared Hosting cos this has been hard coded in the UI to show the flow for shared hosting
-if ($process_type == 'NEW'){ // if the process type is new as sent by FHBRS
+if ($category_name == 'Shared Hosting'){
 
+if ($process_type == 'NEW'){
+// echo "Processing  $package_name $hosting_type for $user from $site_url";
 
-// first we would check if this package exist in WHM
-$query = "https://$whmip:2087/json-api/getpkginfo?api.version=1&pkg=$addons_val1"; 
+$query = "https://$whmip:2087/json-api/getpkginfo?api.version=1&pkg=$addons_val1";
 $curl = curl_init();                                // Create Curl Object
 curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
 curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);       // Allow certs that do not match the hostname
@@ -24,11 +24,14 @@ if ($resulting == false) {
                                                     // log error if curl exec fails
 }
 curl_close($curl);
- $rep = json_decode($resulting, true); 
+
+$rep = json_decode($resulting, true); 
 $result_true = $rep['metadata']['result'];  
   
-  
-   if ($result_true != 1){ // if the package has not been created before then create it
+
+
+
+if ($result_true != 1){ // if the package has not been created before
     $query = "https://$whmip:2087/json-api/addpkg?api.version=1&$addons_col1=$addons_val1&$addons_col2=$addons_val2&$addons_col3=$addons_val3&$addons_col4=$addons_val4&$addons_col5=$addons_val5&$addons_col6=$addons_val6&$addons_col7=$addons_val7&$addons_col8=$addons_val8&$addons_col9=$addons_val9&$addons_col10=$addons_val10&$addons_col11=$addons_val11&$addons_col12=$addons_val12&$addons_col13=$addons_val13&$addons_col14=$addons_val14&$addons_col15=$addons_val15&$addons_col16=$addons_val16";
     
     $curl = curl_init();                                // Create Curl Object
@@ -47,29 +50,42 @@ $result_true = $rep['metadata']['result'];  
     curl_close($curl);
     
     print  $resulting2; 
-     $rep2 = json_decode($resulting2, true); 
+
+    $rep2 = json_decode($resulting2, true); 
     $result_true2 = $rep2['metadata']['result'];  
 }
 
 
+
 if ($result_true == 1 OR  $result_true2 == 1){ // if package exist or new package has been created
- 
-$domain= $ord_add_hosting; // the domain for this order 
-$orderid= strtoupper($ord_token); // uppercase for order id
-$domain = $ord_add_hosting; // domain chosen for the hosting
+
+
+
+$orderid= strtoupper($token); // uppercase for order id
+$domain = $add_hosting; // domain chosen for the hosting
+
+
 $shared_userss= strtok($domain, '.'); // use the domain as the account username but remove the .
 $shared_user= preg_replace('/[0-9]+/', '', $shared_userss); // remove possible numbers
 $shared_u= substr($shared_user, 0, 10); // the trimmed value should not be more than 10
 $shared_usern = str_replace("-","", $shared_u); // rmove all - from the domain name if it exist
+
+
 $rans = substr(str_shuffle("$shared_usern"), 0, 7); // random strings of the striped username
+
 
 // if value does not start with a number cos Cpanel will trigger an error!
 if (ctype_digit(substr($shared_usern, 0, 1)) != 1){ $shared_username = $shared_usern; } else {  $shared_username = $rans; }
-$strong_password= substr(str_shuffle('!a5b%c7de@f03iYk$lm@n#2opq5&rs$tu3$x^y8zA%CD9%EF@GH7$IJ!6K@lM#5No&34S^T#0WX$Y6@Z0&1t34@56?!') , 0 , 13);
-$strong_password2= substr(str_shuffle('@GH7$IJ!6K@lM#5No&34Yk$lm@n#2opq5&rsD9%EF6@0WX$Y!a5b%c7dZ0&1t34@56?!$tu3$x^y8zS^T#e@f03iA%C') , 0 , 13);
 
+
+$strong_password= substr(str_shuffle('!a5b%c7de@f03iYk$lm@n#2opq5&rs$tu3$x^y8zA%CD9%EF@GH7$IJ!6K@lM#5No&34S^T#0WX$Y6@Z0&1t34@56?!') , 0 , 15);
+$strong_password2= urlencode($strong_password);
+
+
+
+ 
 // create account first try
-$query = "https://$whmip:2087/json-api/createacct?api.version=1&username=$shared_username&domain=$domain&plan=$addons_val1&password=$strong_password&contactemail=$u_email";
+$query = "https://$whmip:2087/json-api/createacct?api.version=1&username=$shared_username&domain=$domain&plan=$addons_val1&password=$strong_password2&contactemail=$u_email";
  
 $curl = curl_init();                                // Create Curl Object
 curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
@@ -85,13 +101,18 @@ if ($result == false) {
                                                     // log error if curl exec fails
 }
 curl_close($curl);
- $resp = json_decode($result, true); 
+
+$resp = json_decode($result, true); 
 $returned_ip = $resp['data']['ip'];     
 $creation_true = $resp['metadata']['result'];     
 $creation_false_reason = $resp['metadata']['reason'];  
- print $result; 
-  if ($creation_true != 1){ // Account is not created, lets recreate it again using different values for username and password
- $shared_username = $rans;
+
+print $result; 
+
+
+if ($creation_true != 1){ // Account is not created, lets recreate it again using different values for username
+
+$shared_username = $rans;
 // create account
 $query = "https://$whmip:2087/json-api/createacct?api.version=1&username=$shared_username&domain=$domain&plan=$addons_val1&password=$strong_password2&contactemail=$u_email";
  
@@ -109,18 +130,20 @@ if ($result == false) {
                                                     // log error if curl exec fails
 }
 curl_close($curl);
- $resp = json_decode($result, true); 
+
+$resp = json_decode($result, true); 
 $returned_ip = $resp['data']['ip'];     
 $creation_true = $resp['metadata']['result'];     
 $creation_false_reason = $resp['metadata']['reason'];  
-  print $result; 
+
+ print $result; 
 }                                                       
     
-    
     
 if ($creation_true == 1 && !empty($returned_ip)){ // if returned true as account created
     
 $processed = 1; // this means the process is true and the account has been created
+
 
 if ($addons_val22 == '1'){ // enable backups for these accounts
 $query = "https://$adm_whm_ip:2087/json-api/toggle_user_backup_state?api.version=1&user=$shared_username&legacy=0";
@@ -145,97 +168,157 @@ print $results;   
 } // end create backup
     
    
+
+
 if ($addons_val3 == 'y'){ $shsix= "Dedicated IP: $returned_ip <br><br>
-Since you have a dedicated IP, you cannot use the shared nameservers. Please create your custom nameservers using your dedicated IP address and then point your domains to your custom nameservers. <br><br>
 
-If you have bought your domain from us, just navigate to My Orders --> Domains --> SetUp <br>
+    Since you have a dedicated IP, you cannot use the shared nameservers. Please create your custom nameservers using your dedicated IP address and then point your domains to your custom nameservers. <br><br>
+    
+    If you have bought your domain from us, just navigate to My Orders --> Domains --> SetUp <br>
+    
+    Here you would be able to create your custom nameservers. If your domain is not managed by us, you should check how to do this from the company managing your domain. <br><br>"; }    
+        
+     
 
-Here you would be able to create your custom nameservers. If your domain is not managed by us, you should check how to do this from the company managing your domain. <br><br>"; }    
 
 
-        
+
+    
 if (!empty($addons_val28)){ $for28="Nameserver 3: $addons_val28 <br>"; }
 if (!empty($addons_val29)){ $for29="Nameserver 4: $addons_val29 <br>"; }
 
-$subject=  "Your Shared Hosting Details For $ord_site_url";  
-$body =  "Your shared hosting account has been successfully created, please follow our guide to correctly setup your hosting account with us. <br>
- <hr></hr>
- <strong>POINTING YOUR DOMAINS: </strong><br>
- If you have selected to register a new domain, then the default Nameservers are exactly what you need to get it pointed correctly. If you modified the nameservers when purchasing the domain, you should change it back to the following Nameservers. <br><br>
- Nameserver 1: $addons_val26 <br>
+$subject=  mysqli_real_escape_string($connection, 'Your Shared Hosting Details For ['.$domain.']');  
+$body = mysqli_real_escape_string($connection, "
+Your shared hosting account has been successfully created, please follow our guide to correctly setup your hosting account with us. <br>
+
+<hr></hr>
+
+<strong>POINTING YOUR DOMAINS: </strong><br>
+
+If you have selected to register a new domain, then the default Nameservers are exactly what you need to get it pointed correctly. If you modified the nameservers when purchasing the domain, you should change it back to the following Nameservers. <br><br>
+
+Nameserver 1: $addons_val26 <br>
 Nameserver 2: $addons_val27 <br>
-$for28 $for29<br>
- Check if your domain is correctly pointing from <a href='https://panel.$site_url/domain_setup?domain=$domain'>Your Domains </a> segment from your host billing panel. <br><br>
-  If you have selected to transfer a domain name to us, then you can check the status of your domain transfer <a href='https://panel.$site_url/domain'> Here </a> from your hosting panel. <br><br>
- If you already registered your domain name, please modify the Nameservers to the records given above. <br><br>
-   <hr></hr>
-  <strong>HOSTING DETAILS: </strong> <br><br>
- Cpanel Login: https://$domain/cpanel <br>
+$for28
+$for29<br>
+
+Check if your domain is correctly pointing from <a href='https://panel.$site_url/domain_setup?domain=$domain'>Your Domains </a> segment from your host billing panel. <br><br>
+
+
+If you have selected to transfer a domain name to us, then you can check the status of your domain transfer <a href='https://panel.$site_url/domain'> Here </a> from your hosting panel. <br><br>
+
+If you already registered your domain name, please modify the Nameservers to the records given above. <br><br>
+
+
+
+<hr></hr>
+
+
+<strong>HOSTING DETAILS: </strong> <br><br>
+
+Cpanel Login: https://$domain/cpanel <br>
 Username: $shared_username <br>
-$shsix Password: $strong_password <br>
- Direct CPanel Login & Service Management: https://panel.$site_url/ordered-servers?order_id=$token&id=$id <br><br>
-  If your domain hasn't propagated yet, you can access your CPanel from this link <br>
+$shsix
+Password: $strong_password <br>
+
+Direct CPanel Login & Service Management: https://panel.$site_url/ordered-servers?order_id=$token&id=$id <br><br>
+
+
+If your domain hasn't propagated yet, you can access your CPanel from this link <br>
 $addons_val30/cpanel <br><br>
-   <hr></hr>
+
+
+
+<hr></hr>
 <strong>PAYMENTS & SUBSCRIPTION UPDATE: </strong> <br><br>
- You are expected to renew your subscription as at when due, failure to respond on time would lead to the suspension of your hosting account and it will be finally terminated if hosting plan is not renewed a week after the initial suspension notice. <br>
-   <strong>Please Note!</strong> Automatic billing directly from your payment systems like Paypal, Credit card has been disabled by our system as you would be required to add funds to your wallet before you are able to renew all services. <br><br>
-   <hr></hr>
- <strong>AUP & Terms </strong><br><br>
+
+You are expected to renew your subscription as at when due, failure to respond on time would lead to the suspension of your hosting account and it will be finally terminated if hosting plan is not renewed a week after the initial suspension notice. <br>
+
+
+
+<strong>Please Note!</strong> Automatic billing directly from your payment systems like Paypal, Credit card has been disabled by our system as you would be required to add funds to your wallet before you are able to renew all services. <br><br>
+
+
+
+<hr></hr>
+
+<strong>AUP & Terms </strong><br><br>
 Please make sure you have read our Acceptable Use Policy for this server you have purchased. <a href='https://$site_url/terms'>Learn More Here</a>. Some other critical points rephrased below; <br><br>
- Spamming is highly prohibited: Users MAY NOT utilize our hosting services to transmit, distribute or deliver any unsolicited bulk or commercial messages over the Internet (an action known as 'spam' or 'spamming'). <br><br>
- Refund Policy: We offer a 7-daymoney back guarantee. If, for any reason, you are dissatisfied with our hosting service, we will refund your hosting fees at any time during the first 7 days after the signup date of any hosting account you have purchased from us. <br><br>
- Non-Refundable Services: All service upgrades, wallet refills , addons, dedicated servers, vps and plan renewal services purchased from us; all 1-year or multi-year domain registration or transfer services purchased from us. <br><br>
- <hr></hr>
- ";    
+
+Spamming is highly prohibited: Users MAY NOT utilize our hosting services to transmit, distribute or deliver any unsolicited bulk or commercial messages over the Internet (an action known as 'spam' or 'spamming'). <br><br>
+
+Refund Policy: We offer a 7-daymoney back guarantee. If, for any reason, you are dissatisfied with our hosting service, we will refund your hosting fees at any time during the first 7 days after the signup date of any hosting account you have purchased from us. <br><br>
+
+Non-Refundable Services: All service upgrades, wallet refills , addons, dedicated servers, vps and plan renewal services purchased from us; all 1-year or multi-year domain registration or transfer services purchased from us. <br><br>
+
+<hr></hr>
+
+");    
  
- 
   
+
 $s_activity_name= "Shared hosting for $domain created ($shared_username)";
 $s_username= $shared_username;
 $s_ips= $returned_ip;
 $s_other_details = "Shared Hosting for $domain";
-   }
+
+
+
 }
+}
+}
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+<?php // TO PROCESS UPGRADE
+if ($process_type == 'UPGRADE'){
+
+    $query = "https://$whmip:2087/json-api/changepackage?api.version=1&user=$saved_username&pkg=$addons_val1"; 
+        
+    $curl = curl_init();                                // Create Curl Object
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);       // Allow certs that do not match the hostname
+    curl_setopt($curl, CURLOPT_HEADER,0);               // Do not include header in output
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);       // Return contents of transfer on curl_exec
+    $header[0] = "Authorization: Basic " . base64_encode($whmusername.":".$whmpassword) . "\n\r";
+    curl_setopt($curl, CURLOPT_HTTPHEADER, $header);    // set the username and password
+    curl_setopt($curl, CURLOPT_URL, $query);            // execute the query
+    $result = curl_exec($curl);
+    if ($result == false) {
+        error_log("curl_exec threw error \"" . curl_error($curl) . "\" for $query");   
+                                                        // log error if curl exec fails
+    }
+    curl_close($curl);
+    
+    $resp = json_decode($result, true);     
+    $the_result= $resp['cpanelresult']['data'][0]['result'];  
+
 }
 
-            
-            
-      
-      
-            
-            
-  // TO PROCESS UPGRADE
-if ($process_type == 'UPGRADE'){
-     $query = "https://$whmip:2087/json-api/changepackage?api.version=1&user=$saved_username&pkg=$addons_val1"; 
-        
-    $curl = curl_init();                                // Create Curl Object
-    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
-    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);       // Allow certs that do not match the hostname
-    curl_setopt($curl, CURLOPT_HEADER,0);               // Do not include header in output
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);       // Return contents of transfer on curl_exec
-    $header[0] = "Authorization: Basic " . base64_encode($whmusername.":".$whmpassword) . "\n\r";
-    curl_setopt($curl, CURLOPT_HTTPHEADER, $header);    // set the username and password
-    curl_setopt($curl, CURLOPT_URL, $query);            // execute the query
-    $result = curl_exec($curl);
-    if ($result == false) {
-        error_log("curl_exec threw error \"" . curl_error($curl) . "\" for $query");   
-                                                        // log error if curl exec fails
-    }
-    curl_close($curl);
-    
-    $resp = json_decode($result, true);     
-    $the_result= $resp['cpanelresult']['data'][0]['result'];  
- }
-          
-          
-          
-          
-          
-          
-   // TO SUSPEND AN ACCOUNT
+
+
+
+
+
+
+
+
+
+
+// TO SUSPEND AN ACCOUNT
 if ($process_type == 'SUSPEND'){
-     $query = "https://$whmip:2087/json-api/suspendacct?api.version=1&user=$saved_username&reason=Nonpayment"; 
+
+    $query = "https://$whmip:2087/json-api/suspendacct?api.version=1&user=$saved_username&reason=Nonpayment"; 
         
     $curl = curl_init();                                // Create Curl Object
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
@@ -254,20 +337,19 @@ if ($process_type == 'SUSPEND'){
     
     $resp = json_decode($result, true);     
     $the_result= $resp['cpanelresult']['data'][0]['result'];  
- }
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-       // TO UN-SUSPEND AN ACCOUNT
+
+}
+
+
+
+
+
+
+
+// TO UN-SUSPEND AN ACCOUNT
 if ($process_type == 'UN-SUSPEND'){
-     $query = "https://$whmip:2087/json-api/unsuspendacct?api.version=1&user=$saved_username"; 
+
+    $query = "https://$whmip:2087/json-api/unsuspendacct?api.version=1&user==$saved_username"; 
         
     $curl = curl_init();                                // Create Curl Object
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);       // Allow self-signed certs
@@ -286,5 +368,14 @@ if ($process_type == 'UN-SUSPEND'){
     
     $resp = json_decode($result, true);     
     $the_result= $resp['cpanelresult']['data'][0]['result'];  
- }
- } ?>
+
+}
+?>
+
+
+
+
+
+
+
+<?php } ?>
